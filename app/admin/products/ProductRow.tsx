@@ -55,7 +55,7 @@ export default function ProductRow({ product }: { product: any }) {
   const removeImage = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index)
+      images: prev.images.filter((_: any, i: number) => i !== index)
     }));
   };
 

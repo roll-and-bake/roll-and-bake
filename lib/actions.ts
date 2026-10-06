@@ -1,22 +1,26 @@
 "use server";
 
-import db from "./db";
+import { supabase } from "@/lib/supabase";
 import { revalidatePath } from "next/cache";
 
 // --- Products ---
 export async function getProducts() {
-  return db.prepare("SELECT * FROM products ORDER BY id ASC").all() as any[];
+  const { data, error } = await supabase.from("products").select("*").order("id", { ascending: true });
+  if (error) throw error;
+  return data || [];
 }
 
 export async function toggleProductActive(id: number, currentStatus: number) {
   const newStatus = currentStatus === 1 ? 0 : 1;
-  db.prepare("UPDATE products SET active = ? WHERE id = ?").run(newStatus, id);
+  const { error } = await supabase.from("products").update({ active: newStatus }).eq("id", id);
+  if (error) throw error;
   revalidatePath("/admin/products");
   revalidatePath("/");
 }
 
 export async function updateProductPrice(id: number, price: number) {
-  db.prepare("UPDATE products SET price = ? WHERE id = ?").run(price, id);
+  const { error } = await supabase.from("products").update({ price }).eq("id", id);
+  if (error) throw error;
   revalidatePath("/admin/products");
   revalidatePath("/");
 }
@@ -25,27 +29,33 @@ export async function updateProductPrice(id: number, price: number) {
 export async function createOrder(data: any) {
   const { customerName, phone, email, totalAmount, deliveryMethod, address, receiptPreference, notes, items } = data;
   
-  const insertOrder = db.prepare(`
-    INSERT INTO orders (customer_name, phone, email, total_amount, delivery_method, address, receipt_preference, notes, is_archived)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
-  `);
+  const { data: orderData, error: orderError } = await supabase.from("orders").insert({
+    customer_name: customerName,
+    phone,
+    email,
+    total_amount: totalAmount,
+    delivery_method: deliveryMethod,
+    address,
+    receipt_preference: receiptPreference || "whatsapp",
+    notes,
+    is_archived: 0
+  }).select("id").single();
   
-  const result = insertOrder.run(customerName, phone, email, totalAmount, deliveryMethod, address, receiptPreference || "whatsapp", notes);
-  const orderId = result.lastInsertRowid;
+  if (orderError) throw orderError;
+  const orderId = orderData.id;
   
-  const insertItem = db.prepare(`
-    INSERT INTO order_items (order_id, product_id, product_name, quantity, price)
-    VALUES (?, ?, ?, ?, ?)
-  `);
+  const orderItems = items.map((item: any) => ({
+    order_id: orderId,
+    product_id: item.id,
+    product_name: item.name,
+    quantity: item.quantity,
+    price: item.price
+  }));
+
+  const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
+  if (itemsError) throw itemsError;
   
-  const insertMany = db.transaction((items) => {
-    for (const item of items) {
-      insertItem.run(orderId, item.id, item.name, item.quantity, item.price);
-    }
-  });
-  
-  insertMany(items);
-    generateSumitReceipt(Number(orderId));
+  await generateSumitReceipt(Number(orderId));
   
   revalidatePath("/admin");
   revalidatePath("/admin/pipeline");
@@ -54,90 +64,133 @@ export async function createOrder(data: any) {
 }
 
 export async function getOrders() {
-  const orders = db.prepare("SELECT * FROM orders WHERE is_archived = 0 OR is_archived IS NULL ORDER BY created_at DESC").all() as any[];
-  for (const order of orders) {
-    order.items = db.prepare("SELECT * FROM order_items WHERE order_id = ?").all(order.id);
-  }
-  return orders;
+  const { data: orders, error } = await supabase
+    .from("orders")
+    .select("*, order_items(*)")
+    .or("is_archived.eq.0,is_archived.is.null")
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return orders?.map(o => ({ ...o, items: o.order_items })) || [];
 }
 
 export async function updateOrderStatus(id: number, status: string) {
-  db.prepare("UPDATE orders SET status = ? WHERE id = ?").run(status, id);
+  const { error } = await supabase.from("orders").update({ status }).eq("id", id);
+  if (error) throw error;
   revalidatePath("/admin/pipeline");
   revalidatePath("/admin");
 }
 
 // --- Settings (YPAY & Store) ---
 export async function getSettings() {
-  const rows = db.prepare("SELECT * FROM settings").all() as {key: string, value: string}[];
+  const { data: rows, error } = await supabase.from("settings").select("*");
+  if (error) throw error;
+  
   const settings: Record<string, string> = {};
-  for (const row of rows) settings[row.key] = row.value;
+  if (rows) {
+    for (const row of rows) settings[row.key] = row.value;
+  }
   return settings;
 }
 
 export async function updateSetting(key: string, value: string) {
-  const existing = db.prepare("SELECT * FROM settings WHERE key = ?").get(key);
+  const { data: existing, error: checkError } = await supabase.from("settings").select("*").eq("key", key).maybeSingle();
+  if (checkError) throw checkError;
+  
   if (existing) {
-    db.prepare("UPDATE settings SET value = ? WHERE key = ?").run(value, key);
+    const { error: updateError } = await supabase.from("settings").update({ value }).eq("key", key);
+    if (updateError) throw updateError;
   } else {
-    db.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run(key, value);
+    const { error: insertError } = await supabase.from("settings").insert({ key, value });
+    if (insertError) throw insertError;
   }
+  
   revalidatePath("/");
   revalidatePath("/admin/settings");
 }
 
 export async function updateYpayToken(token: string) {
-  db.prepare("UPDATE settings SET value = ? WHERE key = 'ypay_token'").run(token);
+  const { error } = await supabase.from("settings").update({ value: token }).eq("key", "ypay_token");
+  if (error) throw error;
   revalidatePath("/admin");
 }
 
 // --- Dashboard Stats ---
 export async function getDashboardStats() {
-  const totalRevenue = (db.prepare("SELECT SUM(total_amount) as total FROM orders WHERE status != 'בוטל' AND (is_archived = 0 OR is_archived IS NULL)").get() as any).total || 0;
-  const openOrders = (db.prepare("SELECT COUNT(*) as count FROM orders WHERE status NOT IN ('מוכן לאיסוף', 'הושלם', 'בוטל') AND (is_archived = 0 OR is_archived IS NULL)").get() as any).count || 0;
-  const totalCustomers = (db.prepare("SELECT COUNT(DISTINCT phone) as count FROM orders WHERE (is_archived = 0 OR is_archived IS NULL)").get() as any).count || 0;
+  const { data: revenueData, error: revError } = await supabase
+    .from("orders")
+    .select("total_amount")
+    .neq("status", "בוטל")
+    .or("is_archived.eq.0,is_archived.is.null");
   
+  if (revError) throw revError;
+  const totalRevenue = revenueData?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
+  
+  const { count: openOrders, error: openError } = await supabase
+    .from("orders")
+    .select("*", { count: 'exact', head: true })
+    .not("status", "in", '("מוכן לאיסוף", "הושלם", "בוטל")')
+    .or("is_archived.eq.0,is_archived.is.null");
+  if (openError) throw openError;
+
+  const { data: customersData, error: custError } = await supabase
+    .from("orders")
+    .select("phone")
+    .or("is_archived.eq.0,is_archived.is.null");
+  if (custError) throw custError;
+  const uniquePhones = new Set(customersData?.map(c => c.phone).filter(Boolean));
+  const totalCustomers = uniquePhones.size;
+
   return {
     totalRevenue,
-    openOrders,
+    openOrders: openOrders || 0,
     totalCustomers
   };
 }
 
 // --- Bundles / Physical Packaging ---
 export async function getBundles() {
-  return db.prepare("SELECT * FROM bundles ORDER BY capacity ASC").all() as any[];
+  const { data, error } = await supabase.from("bundles").select("*").order("capacity", { ascending: true });
+  if (error) throw error;
+  return data || [];
 }
 
 export async function addBundle(name: string, capacity: number, discount_percent: number) {
-  db.prepare("INSERT INTO bundles (name, capacity, discount_percent) VALUES (?, ?, ?)").run(name, capacity, discount_percent);
+  const { error } = await supabase.from("bundles").insert({ name, capacity, discount_percent });
+  if (error) throw error;
   revalidatePath("/admin/products");
 }
 
 export async function updateBundle(id: number, name: string, capacity: number, discount_percent: number) {
-  db.prepare("UPDATE bundles SET name = ?, capacity = ?, discount_percent = ? WHERE id = ?").run(name, capacity, discount_percent, id);
+  const { error } = await supabase.from("bundles").update({ name, capacity, discount_percent }).eq("id", id);
+  if (error) throw error;
   revalidatePath("/admin/products");
 }
 
 export async function deleteBundle(id: number) {
-  db.prepare("DELETE FROM bundles WHERE id = ?").run(id);
+  const { error } = await supabase.from("bundles").delete().eq("id", id);
+  if (error) throw error;
   revalidatePath("/admin/products");
 }
 
 // --- Discount Tiers (Quantity based) ---
 export async function getDiscountTiers() {
-  return db.prepare("SELECT * FROM discount_tiers ORDER BY min_qty ASC").all() as any[];
+  const { data, error } = await supabase.from("discount_tiers").select("*").order("min_qty", { ascending: true });
+  if (error) throw error;
+  return data || [];
 }
 
 export async function addDiscountTier(min_qty: number, discount_percent: number) {
-  db.prepare("INSERT INTO discount_tiers (min_qty, discount_percent) VALUES (?, ?)").run(min_qty, discount_percent);
+  const { error } = await supabase.from("discount_tiers").insert({ min_qty, discount_percent });
+  if (error) throw error;
   revalidatePath("/admin/products");
   revalidatePath("/admin/settings");
   revalidatePath("/");
 }
 
 export async function deleteDiscountTier(id: number) {
-  db.prepare("DELETE FROM discount_tiers WHERE id = ?").run(id);
+  const { error } = await supabase.from("discount_tiers").delete().eq("id", id);
+  if (error) throw error;
   revalidatePath("/admin/products");
   revalidatePath("/admin/settings");
   revalidatePath("/");
@@ -145,33 +198,47 @@ export async function deleteDiscountTier(id: number) {
 
 // --- Expenses ---
 export async function getExpenses() {
-  return db.prepare("SELECT * FROM expenses WHERE is_archived = 0 OR is_archived IS NULL ORDER BY expense_date DESC").all() as any[];
+  const { data, error } = await supabase
+    .from("expenses")
+    .select("*")
+    .or("is_archived.eq.0,is_archived.is.null")
+    .order("expense_date", { ascending: false });
+  if (error) throw error;
+  return data || [];
 }
 
 export async function addExpense(data: any) {
   const { date, supplier, category, amount, receipt_image_url } = data;
-  db.prepare(`
-    INSERT INTO expenses (expense_date, supplier, category, amount, receipt_image_url, is_archived) 
-    VALUES (?, ?, ?, ?, ?, 0)
-  `).run(date, supplier, category, amount, receipt_image_url || null);
+  const { error } = await supabase.from("expenses").insert({
+    expense_date: date,
+    supplier,
+    category,
+    amount,
+    receipt_image_url: receipt_image_url || null,
+    is_archived: 0
+  });
+  if (error) throw error;
   revalidatePath("/admin/expenses");
 }
 
 // --- Product Edits ---
 export async function updateProductDetails(id: number, name: string, description: string, price: number, image_url: string) {
-  db.prepare("UPDATE products SET name = ?, description = ?, price = ?, image_url = ? WHERE id = ?").run(name, description, price, image_url, id);
+  const { error } = await supabase.from("products").update({ name, description, price, image_url }).eq("id", id);
+  if (error) throw error;
   revalidatePath("/admin/products");
   revalidatePath("/");
 }
 
 export async function addProduct(name: string, description: string, price: number, image_url: string) {
-  db.prepare("INSERT INTO products (name, description, price, image_url) VALUES (?, ?, ?, ?)").run(name, description, price, image_url);
+  const { error } = await supabase.from("products").insert({ name, description, price, image_url });
+  if (error) throw error;
   revalidatePath("/admin/products");
   revalidatePath("/");
 }
 
 export async function deleteProduct(id: number) {
-  db.prepare("DELETE FROM products WHERE id = ?").run(id);
+  const { error } = await supabase.from("products").delete().eq("id", id);
+  if (error) throw error;
   revalidatePath("/admin/products");
   revalidatePath("/");
 }
@@ -179,8 +246,19 @@ export async function deleteProduct(id: number) {
 // --- Data Reset & Archive ---
 export async function archiveAllData(archiveName: string) {
   if (!archiveName) throw new Error("Archive name is required");
-  db.prepare("UPDATE orders SET is_archived = 1, archive_name = ? WHERE is_archived = 0 OR is_archived IS NULL").run(archiveName);
-  db.prepare("UPDATE expenses SET is_archived = 1, archive_name = ? WHERE is_archived = 0 OR is_archived IS NULL").run(archiveName);
+  
+  const { error: orderError } = await supabase
+    .from("orders")
+    .update({ is_archived: 1, archive_name: archiveName })
+    .or("is_archived.eq.0,is_archived.is.null");
+  if (orderError) throw orderError;
+    
+  const { error: expenseError } = await supabase
+    .from("expenses")
+    .update({ is_archived: 1, archive_name: archiveName })
+    .or("is_archived.eq.0,is_archived.is.null");
+  if (expenseError) throw expenseError;
+  
   revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath("/admin/pipeline");
@@ -188,9 +266,13 @@ export async function archiveAllData(archiveName: string) {
 }
 
 export async function deleteAllData() {
-  db.prepare("DELETE FROM order_items").run();
-  db.prepare("DELETE FROM orders").run();
-  db.prepare("DELETE FROM expenses").run();
+  const { error: itemsError } = await supabase.from("order_items").delete().neq("id", 0);
+  if (itemsError) throw itemsError;
+  const { error: ordersError } = await supabase.from("orders").delete().neq("id", 0);
+  if (ordersError) throw ordersError;
+  const { error: expensesError } = await supabase.from("expenses").delete().neq("id", 0);
+  if (expensesError) throw expensesError;
+  
   revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath("/admin/pipeline");
@@ -199,50 +281,80 @@ export async function deleteAllData() {
 
 // --- Archives Queries ---
 export async function getArchiveNames() {
-  const rows = db.prepare(`
-    SELECT DISTINCT archive_name FROM orders WHERE is_archived = 1 AND archive_name IS NOT NULL
-    UNION
-    SELECT DISTINCT archive_name FROM expenses WHERE is_archived = 1 AND archive_name IS NOT NULL
-  `).all() as { archive_name: string }[];
-  return rows.map(r => r.archive_name).filter(Boolean);
+  const { data: orderData, error: orderError } = await supabase
+    .from("orders")
+    .select("archive_name")
+    .eq("is_archived", 1)
+    .not("archive_name", "is", null);
+  if (orderError) throw orderError;
+  
+  const { data: expenseData, error: expenseError } = await supabase
+    .from("expenses")
+    .select("archive_name")
+    .eq("is_archived", 1)
+    .not("archive_name", "is", null);
+  if (expenseError) throw expenseError;
+
+  const archiveNames = new Set([
+    ...(orderData?.map(r => r.archive_name) || []),
+    ...(expenseData?.map(r => r.archive_name) || [])
+  ]);
+  
+  return Array.from(archiveNames).filter(Boolean);
 }
 
 export async function getArchiveData(archiveName: string) {
-  const orders = db.prepare("SELECT * FROM orders WHERE is_archived = 1 AND archive_name = ? ORDER BY created_at DESC").all(archiveName) as any[];
-  const expenses = db.prepare("SELECT * FROM expenses WHERE is_archived = 1 AND archive_name = ? ORDER BY expense_date DESC").all(archiveName) as any[];
-  
-  for (const order of orders) {
-    order.items = db.prepare("SELECT * FROM order_items WHERE order_id = ?").all(order.id);
-  }
-  
-  return { orders, expenses };
-}
+  const { data: orders, error: ordersError } = await supabase
+    .from("orders")
+    .select("*, order_items(*)")
+    .eq("is_archived", 1)
+    .eq("archive_name", archiveName)
+    .order("created_at", { ascending: false });
+  if (ordersError) throw ordersError;
 
-import { writeFile } from "fs/promises";
-import path from "path";
+  const { data: expenses, error: expensesError } = await supabase
+    .from("expenses")
+    .select("*")
+    .eq("is_archived", 1)
+    .eq("archive_name", archiveName)
+    .order("expense_date", { ascending: false });
+  if (expensesError) throw expensesError;
+  
+  const mappedOrders = orders?.map(o => ({ ...o, items: o.order_items })) || [];
+
+  return { orders: mappedOrders, expenses: expenses || [] };
+}
 
 export async function uploadImage(formData: FormData) {
   const file = formData.get("file") as File;
   if (!file) throw new Error("No file uploaded");
 
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
-
   const filename = `${Date.now()}-${file.name.replace(/\s/g, "_")}`;
-  const filepath = path.join(process.cwd(), "public", "uploads", filename);
   
-  await writeFile(filepath, buffer);
+  const { data, error } = await supabase.storage
+    .from("images")
+    .upload(filename, file, {
+      cacheControl: "3600",
+      upsert: false,
+    });
+    
+  if (error) throw error;
   
-  return `/uploads/${filename}`;
+  const { data: { publicUrl } } = supabase.storage.from("images").getPublicUrl(filename);
+  
+  return publicUrl;
 }
+
 async function generateSumitReceipt(orderId: number) {
   try {
-    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as any;
-    if (!order) return;
-    const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(orderId) as any[];
+    const { data: order, error: orderError } = await supabase.from("orders").select("*").eq("id", orderId).single();
+    if (orderError || !order) return;
+    
+    const { data: items, error: itemsError } = await supabase.from("order_items").select("*").eq("order_id", orderId);
+    if (itemsError || !items) return;
 
-    const sumitCompanyId = db.prepare("SELECT value FROM settings WHERE key = 'sumit_company_id'").get() as any;
-    const sumitApiKey = db.prepare("SELECT value FROM settings WHERE key = 'sumit_api_key'").get() as any;
+    const { data: sumitCompanyId } = await supabase.from("settings").select("value").eq("key", "sumit_company_id").maybeSingle();
+    const { data: sumitApiKey } = await supabase.from("settings").select("value").eq("key", "sumit_api_key").maybeSingle();
 
     if (!sumitCompanyId?.value || !sumitApiKey?.value) {
       console.log('Sumit credentials missing, skipping receipt generation.');
