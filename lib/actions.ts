@@ -10,7 +10,7 @@ export async function getProducts() {
   return data || [];
 }
 
-export async function toggleProductActive(id: number, currentStatus: number) {
+export async function toggleProductActive(id: number, currentStatus: any) {
   const newStatus = currentStatus === 1 || currentStatus === true ? false : true;
   const { error } = await supabase.from("products").update({ active: newStatus }).eq("id", id);
   if (error) throw error;
