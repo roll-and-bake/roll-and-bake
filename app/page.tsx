@@ -13,7 +13,7 @@ export default async function Storefront() {
   const storeSubtitle = settings.store_subtitle || "סינבונים מושחתים בעבודת יד";
   const logoUrl = settings.logo_url || "/logo-transparent.png";
   
-  const activeProducts = products.filter((p: any) => p.active === 1 || p.active === true);
+  const activeProducts = products;
 
   return (
     <main className="flex min-h-screen flex-col bg-[#fffdfa] pb-24 font-sans relative">
