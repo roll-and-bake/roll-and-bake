@@ -422,3 +422,12 @@ async function generateSumitReceipt(orderId: number) {
     console.error('Failed to generate Sumit receipt:', err);
   }
 }
+/ /   - - -   F i n a n c i a l   R e p o r t s   - - -  
+ e x p o r t   a s y n c   f u n c t i o n   g e t F i n a n c i a l R e p o r t D a t a ( )   {  
+     c o n s t   {   d a t a :   o r d e r s ,   e r r o r :   o r d e r s E r r o r   }   =   a w a i t   s u p a b a s e . f r o m ( ' o r d e r s ' ) . s e l e c t ( ' * ' ) . n e q ( ' s t a t u s ' ,   ' ÑÕØÜ' ) ;  
+     i f   ( o r d e r s E r r o r )   t h r o w   o r d e r s E r r o r ;  
+     c o n s t   {   d a t a :   e x p e n s e s ,   e r r o r :   e x p e n s e s E r r o r   }   =   a w a i t   s u p a b a s e . f r o m ( ' e x p e n s e s ' ) . s e l e c t ( ' * ' ) ;  
+     i f   ( e x p e n s e s E r r o r )   t h r o w   e x p e n s e s E r r o r ;  
+     r e t u r n   {   o r d e r s :   o r d e r s   | |   [ ] ,   e x p e n s e s :   e x p e n s e s   | |   [ ]   } ;  
+ }  
+ 
