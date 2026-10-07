@@ -403,6 +403,21 @@ async function generateSumitReceipt(orderId: number) {
 
     const data = await res.json();
     console.log('Sumit Response:', data);
+
+    let docUrl = '';
+    if (data?.Data?.DocumentURL) {
+      docUrl = data.Data.DocumentURL;
+    } else if (data?.Data?.Document?.URL) {
+      docUrl = data.Data.Document.URL;
+    } else if (data?.Data?.URL) {
+      docUrl = data.Data.URL;
+    }
+    
+    if (docUrl) {
+      const currentNotes = order.notes || '';
+      const newNotes = currentNotes ? currentNotes + '\n[לינק לקבלה: ' + docUrl + ']' : '[לינק לקבלה: ' + docUrl + ']';
+      await supabase.from("orders").update({ notes: newNotes }).eq("id", orderId);
+    }
   } catch (err) {
     console.error('Failed to generate Sumit receipt:', err);
   }

@@ -13,8 +13,15 @@ export default function OrderCard({ order, nextStatus, nextLabel, colorClass }: 
   };
 
   const sendWhatsApp = () => {
-    const text = `היי ${order.customer_name}, עדכון לגבי הזמנתך מ-Roll & Bake: ההזמנה שלך עכשיו בסטטוס: ${nextStatus}.`;
-    window.open(`https://wa.me/972${order.phone.substring(1)}?text=${encodeURIComponent(text)}`, "_blank");
+    let text = "��� " + order.customer_name + ", ����� ���� ������ �-Roll & Bake: ����� ������ ��� ����� �: " + nextStatus + ".";
+    
+    const receiptMatch = order.notes?.match(/\[���� �����: (https:\/\/[^\]]+)\]/);
+    if (receiptMatch && receiptMatch[1] && order.receipt_preference === "whatsapp") {
+      text = "��� " + order.customer_name + ", ���� ������ �-Roll & Bake!\n����� ��� ������ ���:\n" + receiptMatch[1];
+    }
+
+    const phone = order.phone.startsWith("0") ? "972" + order.phone.substring(1) : order.phone;
+    window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(text), "_blank");
   };
 
   return (
@@ -40,10 +47,16 @@ export default function OrderCard({ order, nextStatus, nextLabel, colorClass }: 
         </button>
         <button 
           onClick={sendWhatsApp}
-          className="bg-green-50 text-green-700 p-1.5 rounded hover:bg-green-100"
-          title="וואטסאפ ללקוח"
+          className="bg-green-50 text-green-700 p-1.5 rounded hover:bg-green-100 relative"
+          title="������� �����"
         >
           <MessageCircle size={16} />
+          {order.receipt_preference === "whatsapp" && (
+            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+            </span>
+          )}
         </button>
       </div>
     </div>
