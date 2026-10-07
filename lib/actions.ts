@@ -11,7 +11,7 @@ export async function getProducts() {
 }
 
 export async function toggleProductActive(id: number, currentStatus: number) {
-  const newStatus = currentStatus === 1 ? 0 : 1;
+  const newStatus = currentStatus === 1 || currentStatus === true ? false : true;
   const { error } = await supabase.from("products").update({ active: newStatus }).eq("id", id);
   if (error) throw error;
   revalidatePath("/admin/products");
@@ -38,7 +38,7 @@ export async function createOrder(data: any) {
     address,
     receipt_preference: receiptPreference || "whatsapp",
     notes,
-    is_archived: 0
+    is_archived: false
   }).select("id").single();
   
   if (orderError) throw orderError;
@@ -67,7 +67,7 @@ export async function getOrders() {
   const { data: orders, error } = await supabase
     .from("orders")
     .select("*, order_items(*)")
-    .or("is_archived.eq.0,is_archived.is.null")
+    .or("is_archived.eq.false,is_archived.is.null")
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -121,7 +121,7 @@ export async function getDashboardStats() {
     .from("orders")
     .select("total_amount")
     .neq("status", "בוטל")
-    .or("is_archived.eq.0,is_archived.is.null");
+    .or("is_archived.eq.false,is_archived.is.null");
   
   if (revError) throw revError;
   const totalRevenue = revenueData?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
@@ -130,13 +130,13 @@ export async function getDashboardStats() {
     .from("orders")
     .select("*", { count: 'exact', head: true })
     .not("status", "in", '("מוכן לאיסוף", "הושלם", "בוטל")')
-    .or("is_archived.eq.0,is_archived.is.null");
+    .or("is_archived.eq.false,is_archived.is.null");
   if (openError) throw openError;
 
   const { data: customersData, error: custError } = await supabase
     .from("orders")
     .select("phone")
-    .or("is_archived.eq.0,is_archived.is.null");
+    .or("is_archived.eq.false,is_archived.is.null");
   if (custError) throw custError;
   const uniquePhones = new Set(customersData?.map(c => c.phone).filter(Boolean));
   const totalCustomers = uniquePhones.size;
@@ -201,7 +201,7 @@ export async function getExpenses() {
   const { data, error } = await supabase
     .from("expenses")
     .select("*")
-    .or("is_archived.eq.0,is_archived.is.null")
+    .or("is_archived.eq.false,is_archived.is.null")
     .order("expense_date", { ascending: false });
   if (error) throw error;
   return data || [];
@@ -215,7 +215,7 @@ export async function addExpense(data: any) {
     category,
     amount,
     receipt_image_url: receipt_image_url || null,
-    is_archived: 0
+    is_archived: false
   });
   if (error) throw error;
   revalidatePath("/admin/expenses");
@@ -249,14 +249,14 @@ export async function archiveAllData(archiveName: string) {
   
   const { error: orderError } = await supabase
     .from("orders")
-    .update({ is_archived: 1, archive_name: archiveName })
-    .or("is_archived.eq.0,is_archived.is.null");
+    .update({ is_archived: true, archive_name: archiveName })
+    .or("is_archived.eq.false,is_archived.is.null");
   if (orderError) throw orderError;
     
   const { error: expenseError } = await supabase
     .from("expenses")
-    .update({ is_archived: 1, archive_name: archiveName })
-    .or("is_archived.eq.0,is_archived.is.null");
+    .update({ is_archived: true, archive_name: archiveName })
+    .or("is_archived.eq.false,is_archived.is.null");
   if (expenseError) throw expenseError;
   
   revalidatePath("/");
@@ -284,14 +284,14 @@ export async function getArchiveNames() {
   const { data: orderData, error: orderError } = await supabase
     .from("orders")
     .select("archive_name")
-    .eq("is_archived", 1)
+    .eq("is_archived", true)
     .not("archive_name", "is", null);
   if (orderError) throw orderError;
   
   const { data: expenseData, error: expenseError } = await supabase
     .from("expenses")
     .select("archive_name")
-    .eq("is_archived", 1)
+    .eq("is_archived", true)
     .not("archive_name", "is", null);
   if (expenseError) throw expenseError;
 
@@ -307,7 +307,7 @@ export async function getArchiveData(archiveName: string) {
   const { data: orders, error: ordersError } = await supabase
     .from("orders")
     .select("*, order_items(*)")
-    .eq("is_archived", 1)
+    .eq("is_archived", true)
     .eq("archive_name", archiveName)
     .order("created_at", { ascending: false });
   if (ordersError) throw ordersError;
@@ -315,7 +315,7 @@ export async function getArchiveData(archiveName: string) {
   const { data: expenses, error: expensesError } = await supabase
     .from("expenses")
     .select("*")
-    .eq("is_archived", 1)
+    .eq("is_archived", true)
     .eq("archive_name", archiveName)
     .order("expense_date", { ascending: false });
   if (expensesError) throw expensesError;

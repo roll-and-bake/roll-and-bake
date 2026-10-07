@@ -62,7 +62,7 @@ export default function ProductRow({ product }: { product: any }) {
   const firstImage = formData.images[0] || '/logo.png';
 
   return (
-    <tr className={`transition-colors ${product.active === 0 ? 'bg-gray-50 opacity-60' : 'hover:bg-slate-50'}`}>
+    <tr className={`transition-colors ${(product.active === 0 || product.active === false) ? 'bg-gray-50 opacity-60' : 'hover:bg-slate-50'}`}>
       <td className="p-4 font-medium text-gray-800 flex items-center gap-3">
         {isEditing ? (
           <div className="flex flex-col gap-2 w-full">
@@ -122,7 +122,7 @@ export default function ProductRow({ product }: { product: any }) {
         )}
       </td>
       <td className="p-4 cursor-pointer" onClick={handleToggle}>
-        {product.active === 1 ? (
+        {(product.active === 1 || product.active === true) ? (
           <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center w-fit gap-1">
             <CheckCircle size={12} /> פעיל
           </span>
