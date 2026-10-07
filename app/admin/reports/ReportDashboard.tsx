@@ -8,8 +8,7 @@ export default function ReportDashboard({ rawOrders, rawExpenses }: { rawOrders:
   const [period, setPeriod] = useState<string>('annual');
 
   const filteredData = useMemo(() => {
-    // Determine the month range based on period
-    let startMonth = 0; // 0-indexed (Jan = 0)
+    let startMonth = 0;
     let endMonth = 11;
 
     if (period !== 'annual') {
@@ -39,10 +38,9 @@ export default function ReportDashboard({ rawOrders, rawExpenses }: { rawOrders:
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 items-end">
         <div className="flex-1 w-full">
-          <label className="block text-sm font-medium text-gray-700 mb-2">ωπϊ ξρ</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Χ©Χ Χª ΧΧ΅</label>
           <select 
             value={year} 
             onChange={(e) => setYear(Number(e.target.value))}
@@ -53,29 +51,28 @@ export default function ReportDashboard({ rawOrders, rawExpenses }: { rawOrders:
         </div>
         
         <div className="flex-1 w-full">
-          <label className="block text-sm font-medium text-gray-700 mb-2">ϊχετϊ γιεεη</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">ΧªΧ§Χ•Χ¤Χª Χ“Χ™Χ•Χ•Χ—</label>
           <select 
             value={period} 
             onChange={(e) => setPeriod(e.target.value)}
             className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white outline-none"
           >
-            <option value="annual">ωπϊι (λμ δωπδ)</option>
-            <option value="1-2">ιπεΰψ - ταψεΰψ (1-2)</option>
-            <option value="3-4">ξψυ - ΰτψιμ (3-4)</option>
-            <option value="5-6">ξΰι - ιεπι (5-6)</option>
-            <option value="7-8">ιεμι - ΰεβερθ (7-8)</option>
-            <option value="9-10">ρτθξαψ - ΰεχθεαψ (9-10)</option>
-            <option value="11-12">πεαξαψ - γφξαψ (11-12)</option>
+            <option value="annual">Χ©Χ ΧªΧ™ (Χ›Χ Χ”Χ©Χ Χ”)</option>
+            <option value="1-2">Χ™Χ Χ•ΧΧ¨ - Χ¤Χ‘Χ¨Χ•ΧΧ¨ (1-2)</option>
+            <option value="3-4">ΧΧ¨Χ¥ - ΧΧ¤Χ¨Χ™Χ (3-4)</option>
+            <option value="5-6">ΧΧΧ™ - Χ™Χ•Χ Χ™ (5-6)</option>
+            <option value="7-8">Χ™Χ•ΧΧ™ - ΧΧ•Χ’Χ•Χ΅Χ (7-8)</option>
+            <option value="9-10">Χ΅Χ¤ΧΧΧ‘Χ¨ - ΧΧ•Χ§ΧΧ•Χ‘Χ¨ (9-10)</option>
+            <option value="11-12">Χ Χ•Χ‘ΧΧ‘Χ¨ - Χ“Χ¦ΧΧ‘Χ¨ (11-12)</option>
           </select>
         </div>
       </div>
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-500 font-medium">ρδ"λ δλπρεϊ (αψεθε)</p>
-            <h3 className="text-3xl font-bold text-green-600">¤{filteredData.totalIncome.toLocaleString()}</h3>
+            <p className="text-sm text-gray-500 font-medium">Χ΅Χ”"Χ› Χ”Χ›Χ Χ΅Χ•Χª (Χ‘Χ¨Χ•ΧΧ•)</p>
+            <h3 className="text-3xl font-bold text-green-600">β‚ª{filteredData.totalIncome.toLocaleString()}</h3>
           </div>
           <div className="bg-green-50 p-4 rounded-full text-green-600">
             <TrendingUp size={28} />
@@ -84,8 +81,8 @@ export default function ReportDashboard({ rawOrders, rawExpenses }: { rawOrders:
 
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-500 font-medium">ρδ"λ δεφΰεϊ ξελψεϊ</p>
-            <h3 className="text-3xl font-bold text-red-500">¤{filteredData.totalExpenses.toLocaleString()}</h3>
+            <p className="text-sm text-gray-500 font-medium">Χ΅Χ”"Χ› Χ”Χ•Χ¦ΧΧ•Χª ΧΧ•Χ›Χ¨Χ•Χª</p>
+            <h3 className="text-3xl font-bold text-red-500">β‚ª{filteredData.totalExpenses.toLocaleString()}</h3>
           </div>
           <div className="bg-red-50 p-4 rounded-full text-red-500">
             <TrendingDown size={28} />
@@ -94,12 +91,12 @@ export default function ReportDashboard({ rawOrders, rawExpenses }: { rawOrders:
 
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-500 font-medium">ψεεη πχι (μτπι ξρ)</p>
-            <h3 className={\	ext-3xl font-bold \\}>
-              ¤{filteredData.profit.toLocaleString()}
+            <p className="text-sm text-gray-500 font-medium">Χ¨Χ•Χ•Χ— Χ Χ§Χ™ (ΧΧ¤Χ Χ™ ΧΧ΅)</p>
+            <h3 className={`text-3xl font-bold ${filteredData.profit >= 0 ? 'text-blue-600' : 'text-orange-500'}`}>
+              β‚ª{filteredData.profit.toLocaleString()}
             </h3>
           </div>
-          <div className={\p-4 rounded-full \\}>
+          <div className={`p-4 rounded-full ${filteredData.profit >= 0 ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-500'}`}>
             <DollarSign size={28} />
           </div>
         </div>
@@ -107,10 +104,10 @@ export default function ReportDashboard({ rawOrders, rawExpenses }: { rawOrders:
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-6">
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <h3 className="text-xl font-bold text-[#6a4b44] mb-4">τιψεθ δλπρεϊ ({filteredData.incomeList.length} ςρχΰεϊ)</h3>
+          <h3 className="text-xl font-bold text-[#6a4b44] mb-4">Χ¤Χ™Χ¨Χ•Χ Χ”Χ›Χ Χ΅Χ•Χª ({filteredData.incomeList.length} ΧΆΧ΅Χ§ΧΧ•Χª)</h3>
           <div className="max-h-96 overflow-y-auto space-y-2 pr-2">
             {filteredData.incomeList.length === 0 ? (
-              <p className="text-gray-400 text-sm">ΰιο δλπρεϊ αϊχετδ ζε.</p>
+              <p className="text-gray-400 text-sm">ΧΧ™Χ Χ”Χ›Χ Χ΅Χ•Χª Χ‘ΧªΧ§Χ•Χ¤Χ” Χ–Χ•.</p>
             ) : (
               filteredData.incomeList.map(o => (
                 <div key={o.id} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
@@ -118,7 +115,7 @@ export default function ReportDashboard({ rawOrders, rawExpenses }: { rawOrders:
                     <p className="font-medium">{o.customer_name}</p>
                     <p className="text-xs text-gray-400">{new Date(o.created_at).toLocaleDateString('he-IL')}</p>
                   </div>
-                  <span className="text-green-600 font-bold">+¤{o.total_amount}</span>
+                  <span className="text-green-600 font-bold">+β‚ª{o.total_amount}</span>
                 </div>
               ))
             )}
@@ -126,10 +123,10 @@ export default function ReportDashboard({ rawOrders, rawExpenses }: { rawOrders:
         </div>
         
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <h3 className="text-xl font-bold text-[#6a4b44] mb-4">τιψεθ δεφΰεϊ ({filteredData.expenseList.length} ψιωεξιν)</h3>
+          <h3 className="text-xl font-bold text-[#6a4b44] mb-4">Χ¤Χ™Χ¨Χ•Χ Χ”Χ•Χ¦ΧΧ•Χª ({filteredData.expenseList.length} Χ¨Χ™Χ©Χ•ΧΧ™Χ)</h3>
           <div className="max-h-96 overflow-y-auto space-y-2 pr-2">
             {filteredData.expenseList.length === 0 ? (
-              <p className="text-gray-400 text-sm">ΰιο δεφΰεϊ αϊχετδ ζε.</p>
+              <p className="text-gray-400 text-sm">ΧΧ™Χ Χ”Χ•Χ¦ΧΧ•Χª Χ‘ΧªΧ§Χ•Χ¤Χ” Χ–Χ•.</p>
             ) : (
               filteredData.expenseList.map(e => (
                 <div key={e.id} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
@@ -137,7 +134,7 @@ export default function ReportDashboard({ rawOrders, rawExpenses }: { rawOrders:
                     <p className="font-medium">{e.supplier} - {e.category}</p>
                     <p className="text-xs text-gray-400">{new Date(e.expense_date).toLocaleDateString('he-IL')}</p>
                   </div>
-                  <span className="text-red-500 font-bold">-¤{e.amount}</span>
+                  <span className="text-red-500 font-bold">-β‚ª{e.amount}</span>
                 </div>
               ))
             )}

@@ -11,11 +11,11 @@ export default async function ReportsPage() {
     <div className="space-y-6 max-w-6xl mx-auto pb-20">
       <h1 className="text-3xl font-bold text-[#6a4b44] flex items-center mb-6">
         <Calculator className="ml-3" size={32} />
-        γεηεϊ ξρ ετιππριν
+        Χ“Χ•Χ•Χ•Χª ΧΧ΅ Χ•Χ¤Χ™Χ Χ Χ΅Χ™Χ
       </h1>
       
       <p className="text-gray-600 mb-8">
-        ξςψλϊ δγιεεη ξΰτωψϊ μκ μτμη ΰϊ δδλπρεϊ εδδεφΰεϊ αφεψδ ηλξδ (ωπϊιϊ ΰε γε-ηεγωιϊ) μξθψϊ ϊωμεξι ξχγξεϊ ξρ δλπρδ ΰε ξς"ξ.
+        ΧΧΆΧ¨Χ›Χª Χ”Χ“Χ™Χ•Χ•Χ— ΧΧΧ¤Χ¨Χ¨Χª ΧΧ ΧΧ¤ΧΧ— ΧΧª Χ”Χ”Χ›Χ Χ΅Χ•Χª Χ•Χ”Χ”Χ•Χ¦ΧΧ•Χª Χ‘Χ¨Χ•Χ¨Χ” Χ—Χ›ΧΧ” (Χ¨Χ—ΧªΧ™Χª ΧΧ• Χ“οΏ½^-Χ—Χ•Χ“Χ©Χ™Χª) ΧΧΧΧ¨Χª ΧªΧ©Χ’Χ•ΧΧ™ ΧΧ§Χ“ΧΧ•Χª ΧΧ΅ Χ”Χ›Χ Χ΅Χ” ΧΧ• ΧΧΆ"οΏ½.
       </p>
 
       <ReportDashboard rawOrders={data.orders} rawExpenses={data.expenses} />
