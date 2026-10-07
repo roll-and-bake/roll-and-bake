@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import React from "react";
 import { Archive } from "lucide-react";
 import { getArchiveNames, getArchiveData } from "@/lib/actions";

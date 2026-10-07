@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import React from "react";
 import { Receipt } from "lucide-react";
 import { getExpenses } from "@/lib/actions";

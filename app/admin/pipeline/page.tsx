@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import React from "react";
 import { ChefHat, Printer, MessageCircle } from "lucide-react";
 import { getOrders } from "@/lib/actions";

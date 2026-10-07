@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import React from "react";
 import { Package, Percent } from "lucide-react";
 import { getProducts, getBundles, getDiscountTiers } from "@/lib/actions";

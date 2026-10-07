@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import React from "react";
 import { TrendingUp, Package, Users, Receipt } from "lucide-react";
 import { getDashboardStats, getSettings, getOrders } from "@/lib/actions";

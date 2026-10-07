@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import React from "react";
 import { Settings } from "lucide-react";
 import { getSettings } from "@/lib/actions";
