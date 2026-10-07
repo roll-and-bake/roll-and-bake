@@ -13,11 +13,11 @@ export default function OrderCard({ order, nextStatus, nextLabel, colorClass }: 
   };
 
   const sendWhatsApp = () => {
-    let text = "��� " + order.customer_name + ", ����� ���� ������ �-Roll & Bake: ����� ������ ��� ����� �: " + nextStatus + ".";
+    let text = "היי " + order.customer_name + ", עדכון לגבי ההזמנה מ-Roll & Bake: ההזמנה שלך עודכנה לסטטוס: " + nextStatus + ".";
     
-    const receiptMatch = order.notes?.match(/\[���� �����: (https:\/\/[^\]]+)\]/);
+    const receiptMatch = order.notes?.match(/\[לינק לקבלה: (https:\/\/[^\]]+)\]/);
     if (receiptMatch && receiptMatch[1] && order.receipt_preference === "whatsapp") {
-      text = "��� " + order.customer_name + ", ���� ������ �-Roll & Bake!\n����� ��� ������ ���:\n" + receiptMatch[1];
+      text = "היי " + order.customer_name + ", תודה שהזמנת מ-Roll & Bake!\nהקבלה עבור ההזמנה מצורפת כאן:\n" + receiptMatch[1];
     }
 
     const phone = order.phone.startsWith("0") ? "972" + order.phone.substring(1) : order.phone;
@@ -32,7 +32,7 @@ export default function OrderCard({ order, nextStatus, nextLabel, colorClass }: 
           <div key={item.id}>{item.quantity}x {item.product_name}</div>
         ))}
         {order.delivery_method === 'delivery' && (
-          <div className="mt-1 font-medium text-[#cf6b22]">🚚 משלוח: {order.address}</div>
+          <div className="mt-1 font-medium text-[#cf6b22]">משלוח: {order.address}</div>
         )}
       </div>
       
@@ -48,7 +48,7 @@ export default function OrderCard({ order, nextStatus, nextLabel, colorClass }: 
         <button 
           onClick={sendWhatsApp}
           className="bg-green-50 text-green-700 p-1.5 rounded hover:bg-green-100 relative"
-          title="������� �����"
+          title="וואטסאפ ללקוח"
         >
           <MessageCircle size={16} />
           {order.receipt_preference === "whatsapp" && (
