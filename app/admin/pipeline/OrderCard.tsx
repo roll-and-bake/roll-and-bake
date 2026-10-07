@@ -13,11 +13,19 @@ export default function OrderCard({ order, nextStatus, nextLabel, colorClass }: 
   };
 
   const sendWhatsApp = () => {
-    let text = "היי " + order.customer_name + ", עדכון לגבי ההזמנה מ-Roll & Bake: ההזמנה שלך עודכנה לסטטוס: " + nextStatus + ".";
+    let text = "היי " + order.customer_name + ", עדכון לגבי ההזמנה מ-Roll & Bake: סטטוס ההזמנה שלך עודכן ל: " + nextStatus + ".";
+    
+    if (order.status === "בטיפול" || order.status === "מוכן לאיסוף") {
+        if (order.delivery_method === 'delivery') {
+            text = "היי " + order.customer_name + ", השליח שלנו בדרך אליך עם הסינבונים מ-Roll & Bake! בתאבון!";
+        } else {
+            text = "היי " + order.customer_name + ", ההזמנה שלך מוכנה ומחכה לך לאיסוף מ-Roll & Bake! בתאבון!";
+        }
+    }
     
     const receiptMatch = order.notes?.match(/\[לינק לקבלה: (https:\/\/[^\]]+)\]/);
-    if (receiptMatch && receiptMatch[1] && order.receipt_preference === "whatsapp") {
-      text = "היי " + order.customer_name + ", תודה שהזמנת מ-Roll & Bake!\nהקבלה עבור ההזמנה מצורפת כאן:\n" + receiptMatch[1];
+    if (receiptMatch && receiptMatch[1] && order.receipt_preference === "whatsapp" && (order.status === "ממתין לאימות" || order.status === "ממתין לאישור" || order.status === "בטיפול")) {
+      text = "היי " + order.customer_name + ", אישרנו את התשלום. תודה שהזמנת מ-Roll & Bake!\nהקבלה עבור ההזמנה מצורפת כאן:\n" + receiptMatch[1];
     }
 
     const phone = order.phone.startsWith("0") ? "972" + order.phone.substring(1) : order.phone;

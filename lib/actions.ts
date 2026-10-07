@@ -55,7 +55,7 @@ export async function createOrder(data: any) {
   const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
   if (itemsError) throw itemsError;
   
-  await generateSumitReceipt(Number(orderId));
+  // moved to updateOrderStatus
   
   revalidatePath("/admin");
   revalidatePath("/admin/pipeline");

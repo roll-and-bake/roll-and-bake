@@ -3,6 +3,7 @@ import { getProducts, getSettings } from "@/lib/actions";
 import ProductCard from "@/components/store/ProductCard";
 import Image from "next/image";
 import FloatingCartButton from "@/components/store/FloatingCartButton";
+import HamburgerMenu from "@/components/store/HamburgerMenu";
 
 export default async function Storefront() {
   const products = await getProducts();
@@ -13,7 +14,7 @@ export default async function Storefront() {
   const storeSubtitle = settings.store_subtitle || "סינבונים מושחתים בעבודת יד";
   const logoUrl = settings.logo_url || "/logo-transparent.png";
   
-  const activeProducts = products;
+  const activeProducts = products.filter((p: any) => p.active === true || p.active === 1);
 
   return (
     <main className="flex min-h-screen flex-col bg-[#fffdfa] pb-24 font-sans relative">
@@ -24,7 +25,8 @@ export default async function Storefront() {
       </div>
 
       {/* כותרת מותג וניווט */}
-      <header className="flex flex-col items-center pt-10 pb-6 px-4 bg-[#f0dca4]/20 border-b border-[#dac8b8]/30 mb-8">
+      <header className="flex flex-col items-center pt-10 pb-6 px-4 bg-[#f0dca4]/20 border-b border-[#dac8b8]/30 mb-8 relative">
+        <HamburgerMenu />
         <div className="relative w-40 h-40 mb-5">
           <Image
             src={logoUrl}

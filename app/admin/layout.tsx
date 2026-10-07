@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Settings, LayoutDashboard, Utensils, Receipt, Package, Archive, Calculator } from "lucide-react";
+import { Settings, LayoutDashboard, Utensils, Receipt, Package, Archive, Calculator, Star, ShieldCheck } from "lucide-react";
 
 export default function AdminLayout({
   children,
@@ -32,9 +32,17 @@ export default function AdminLayout({
             <Receipt size={20} />
             <span>הוצאות מוכרות</span>
           </Link>
-          <Link href="/admin/reports" className="flex items-center space-x-3 space-x-reverse p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/10">
-            <Calculator size={20} className="text-[#f0dca4]" />
-            <span className="font-bold text-[#f0dca4]">דוחות מס (דו-חודשי)</span>
+          <Link href="/admin/reports" className="flex items-center space-x-3 space-x-reverse p-3 rounded-lg hover:bg-white/10 transition-colors">
+            <Calculator size={20} />
+            <span>דוחות מס (דו-חודשי)</span>
+          </Link>
+          <Link href="/admin/feedback" className="flex items-center space-x-3 space-x-reverse p-3 rounded-lg hover:bg-white/10 transition-colors">
+            <Star size={20} />
+            <span>משוב לקוחות</span>
+          </Link>
+          <Link href="/admin/kashrut" className="flex items-center space-x-3 space-x-reverse p-3 rounded-lg hover:bg-white/10 transition-colors">
+            <ShieldCheck size={20} />
+            <span>ניהול כשרות</span>
           </Link>
           <Link href="/admin/archives" className="flex items-center space-x-3 space-x-reverse p-3 rounded-lg hover:bg-white/10 transition-colors">
             <Archive size={20} />

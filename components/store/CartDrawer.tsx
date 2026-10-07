@@ -76,16 +76,6 @@ export default function CartDrawer() {
         {items.length > 0 && (
           <div className="p-5 border-t border-[#dac8b8]/30 bg-[#fffdfa] shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
             
-            <div className="flex items-start bg-[#f0dca4]/30 p-3 rounded-xl mb-4 border border-[#cf6b22]/20">
-              <Gift className="text-[#cf6b22] ml-2 shrink-0 mt-0.5" size={18} />
-              <div>
-                <p className="text-sm font-bold text-[#82220a]">מועדון Roll & Bake</p>
-                <p className="text-xs text-[#6a4b44]">
-                  בהזמנה זו תצבור <span className="font-bold text-[#cf6b22]">{Math.floor(total * 0.1)} נקודות</span> לקנייה הבאה!
-                </p>
-              </div>
-            </div>
-
             <div className="flex justify-between items-end mb-4 px-1">
               <span className="text-gray-600 font-medium">סה״כ לתשלום:</span>
               <div className="flex items-center gap-3" dir="ltr">

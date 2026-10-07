@@ -39,6 +39,7 @@ export default function CheckoutPage() {
     }
   }, []);
 
+  const totalToPay = formData.deliveryMethod === 'delivery' ? total + 20 : total;
   const merchantPhone = "055-9195456";
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -100,7 +101,7 @@ export default function CheckoutPage() {
       const res = await createOrder({
         ...formData,
         notes: finalNotes,
-        totalAmount: total,
+        totalAmount: totalToPay,
         items: items
       });
 
@@ -123,9 +124,9 @@ export default function CheckoutPage() {
         // Redirect after a short delay so they can read the copy message
         setTimeout(() => {
           if (paymentApp === 'bit') {
-            window.location.href = `https://bitpay.co.il/app/pay?phone=${cleanPhone}&amount=${total}`;
+            window.location.href = `https://bitpay.co.il/app/pay?phone=${cleanPhone}&amount=${totalToPay}`;
           } else {
-            window.location.href = `https://payboxapp.page.link/?link=https://www.payboxapp.com?amount=${total}&phone=${cleanPhone}`;
+            window.location.href = `https://payboxapp.page.link/?link=https://www.payboxapp.com?amount=${totalToPay}&phone=${cleanPhone}`;
           }
           // After redirecting, show success screen
           setTimeout(() => setIsSuccess(true), 1000);
@@ -282,7 +283,7 @@ export default function CheckoutPage() {
         <div className="bg-white rounded-2xl shadow-sm border border-[#dac8b8]/50 p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-[#6a4b44]">תשלום</h2>
-            <div className="text-2xl font-bold text-[#82220a]">{total} ₪</div>
+            <div className="text-2xl font-bold text-[#82220a]">{totalToPay} ₪</div>
           </div>
           
           <p className="text-sm text-[#b5895e] mb-4">
